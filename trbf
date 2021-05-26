@@ -10,7 +10,7 @@
 
 set -e
 
-version="0.0.2"
+version="0.0.3"
 script_name=$(basename "$0")
 type=""
 install_type=""
@@ -56,7 +56,7 @@ Examples:
 =========
 
     Create a Homebrew formula Gist with the file name and description. 
-    ./$script_name -l
+    $script_name -l
 
     Create a Homebrew cask formula Gist with the file name and description. 
     $script_name -c
