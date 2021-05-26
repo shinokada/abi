@@ -12,8 +12,8 @@ set -e
 
 version="0.0.1"
 script_name=$(basename "$0")
-leaves=""
-cask=""
+type=""
+install_type=""
 list_name=""
 list_description="My brew list"
 cask_description="My brew cask list"
@@ -98,19 +98,19 @@ while (($# > 0)); do
         exit
         ;;
     -l | --leaves)
-        leaves=true
+        type="leaves"
         shift 1
         ;;
-    -c | --listcask)
-        listcask=true
+    -c | --cask)
+        type="cask"
         shift 1
         ;;
     -i | --install)
-        install=true
+        install_type="list"
         shift 1
         ;;
     -j | --installcask)
-        installcask=true
+        install_type="cask"
         shift 1
         ;;
     -h | --help | *)
@@ -153,7 +153,7 @@ fn_createList() {
     # -w opens the browser
     # -d for a description for the gist
     # -f for gist name
-    echo "In the leaves"
+
     echo "visibility ${visibility}, desc: ${description},  filename: ${filename}"
     echo
     read -rp "Do you want to create a Gist with the description: ${description}, file name: ${filename}, list: ${list_name}? yes/y or no/n   " LEAV
@@ -170,11 +170,6 @@ fn_createList() {
     echo "Please save the URL."
     exit
 }
-
-# fn_listcask() {
-#     brew list --cask | gh gist create $visibility -w $description $caskfilename
-#     echo "Please save the URL."
-# }
 
 check_url() {
     regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
@@ -212,8 +207,8 @@ install() {
 
 main() {
 
-    [ $leaves = "true" ] && fn_createList leaves
-    [ $listcask = "true" ] && fn_createList cask
+    [[ ! -z $type ]] && fn_createList $type
+    # [ $listcask = "true" ] && fn_createList cask
     exit
 
 }
@@ -224,6 +219,8 @@ echo "checking brew"
 check_cmd brew
 echo "checking gh"
 check_cmd gh
+# check flag conflict
+# check_flags
 echo "Running main"
 main "$@"
 
