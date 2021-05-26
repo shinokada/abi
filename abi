@@ -3,7 +3,7 @@
 ########################
 # Author: Shinichi Okada
 # Date: 2021-05-26
-# trbf (Transmit Brew Formula)
+# abi (Automate Brew Install)
 ###########################
 
 # set -e The set -e option instructs bash to immediately exit if any command [1] has a non-zero exit status.
