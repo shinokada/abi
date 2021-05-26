@@ -14,12 +14,12 @@ version="0.0.1"
 script_name=$(basename "$0")
 type=""
 install_type=""
-list_name=""
 list_description="My brew list"
 cask_description="My brew cask list"
 list_filename="my-brew-formula"
 cask_filename="my-brew-cask-formula"
 visibility="-p"
+url=""
 
 usage() {
     cat <<EOF
@@ -81,12 +81,12 @@ while (($# > 0)); do
     case $1 in
     -d | --description)
         list_description="${2}"
-        cask_description="$2"
+        cask_description="${2}"
         shift 2
         ;;
     -f | --filename)
-        list_filename="$2"
-        cask_filename="$2"
+        list_filename="${2}"
+        cask_filename="${2}"
         shift 2
         ;;
     -s | --secret)
@@ -110,8 +110,12 @@ while (($# > 0)); do
         shift 1
         ;;
     -j | --installcask)
-        install_type="cask"
+        install_type="--cask"
         shift 1
+        ;;
+    -u | --url)
+        url="${2}"
+        shift 2
         ;;
     -h | --help | *)
         usage
@@ -125,6 +129,7 @@ check_os() {
         echo "This is meant to be run on macOS only"
         exit
     fi
+    echo "OS is good."
 }
 
 check_cmd() {
@@ -133,10 +138,16 @@ check_cmd() {
         echo "Please install $1 or add the PATH to .zshrc or .bash_profile."
         exit 1
     fi
+    echo "${1} is installed."
 }
 
 fn_createList() {
+    local list_name
+    local filename
+    local description
+    local leav_ans
 
+    echo "Creating a list ..."
     if [[ $1 = "cask" ]]; then
         list_name="list --cask"
         filename="${cask_filename}"
@@ -171,7 +182,7 @@ fn_createList() {
     exit
 }
 
-check_url() {
+create_raw() {
     regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
     if [[ ${1} =~ $regex ]]; then
         if [[ $(curl --silent --head --fail "${1}/raw") ]]; then
@@ -185,17 +196,35 @@ check_url() {
     fi
 }
 
-install() {
-    if [ $1 ]; then
+fn_install() {
+    echo "Installation started ..."
+    # check url
+    local install_type=${1}
+    if [ $2 ]; then
         tmpfile=$(mktemp /tmp/list.XXXXXX)
-        url=$1
-        check_url $url >$tmpfile
+        url=$2
+        create_raw $url >$tmpfile
         array=($(cat $tmpfile))
         for element in "${array[@]}"; do
             # it can be taps, shellspec/shellspec/shellspec
             # shinokada/backpack_install/backpack_install, shinokada/gitstart/gitstart
-            echo "Installing ${element}"
-            # brew install "${element}" || exit 1
+            if [[ "${element}" == *"/"* ]]; then
+                # echo "${element} has /."
+                # var="a/b/c"; echo ${var#*/} is b/c... echo ${var##*/} returns c
+                # https://stackoverflow.com/questions/9532654/expression-after-last-specific-character
+                # parameter expansion
+                tap_name="${element%/*}" # output a/b
+                formula="${element##*/}" # output c
+                echo "Running tap ${tap_name}"
+                # echo "${formula}"
+                brew tap ${tap_name}
+            else
+                formula=${element}
+                # brew install <formula> doesn't need install_type
+                install_type=""
+            fi
+            echo "Installing ${install_type} ${formula}"
+            brew install ${install_type} "${element}" || exit 1
         done
         rm "${tmpfile}"
         exit
@@ -206,22 +235,16 @@ install() {
 }
 
 main() {
-
     [[ ! -z $type ]] && fn_createList $type
-    # [ $listcask = "true" ] && fn_createList cask
-    exit
-
+    [[ ! -z $install_type ]] && fn_install $install_type $url
 }
 
-echo "checking os"
+echo "Checking OS ..."
 check_os
-echo "checking brew"
+echo "Checking Homebrew ..."
 check_cmd brew
-echo "checking gh"
+echo "Checking Github CLI, gh ..."
 check_cmd gh
-# check flag conflict
-# check_flags
-echo "Running main"
 main "$@"
-
+echo "Task completed."
 exit
