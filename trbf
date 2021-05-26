@@ -2,7 +2,7 @@
 
 ########################
 # Author: Shinichi Okada
-# Date: 2021-05-25
+# Date: 2021-05-26
 # trbf (Transmit Brew Formula)
 ###########################
 
@@ -10,7 +10,7 @@
 
 set -e
 
-version="0.0.1"
+version="0.0.2"
 script_name=$(basename "$0")
 type=""
 install_type=""
@@ -29,7 +29,7 @@ $script_name
 
 Description: 
 ============
-This script create a Gist from your Homebrew formula or cask. It can install Homebrew formula or cask from the Gist.
+This script creates a Gist from your Homebrew formula or cask. It can install Homebrew formula or cask from the Gist.
 
 Requirement:
 ============
@@ -41,37 +41,41 @@ gh
 Usage:
 ======
 ./$script_name [ -l | --leaves ] [ -c | --cask ] [ -i | --install ] [ -j | --caskinstall ][ -v | --version ] [ -h | --help ] 
+    -d | --description Gist description. Default: "My brew list" or "My brew cask list"
+    -f | --filename    Gist file name. Default: "my-brew-formula" or "my-brew-cask-formula"
+    -s | --secret      Gist visibility. Default: -p (Public)
+    -v | --version     Script version.
     -l | --leaves      Create a Homebrew formula Gist      
     -c | --cask        Create a Homebrew cask formula Gist
-    -i | --install     Install Homebrew formula from a Gist
-    -j | --caskinstall Install Homebrew cask formula from a Gist 
-    -v | --version     Script version.
+    -i | --install     Install Homebrew formula and taps from a Gist
+    -j | --installcask Install Homebrew cask formula from a Gist 
+    -u | --url         Gist URL
     -h | --help        Show help.
 
 Examples:
 =========
 
-    Create a Homebrew formula Gist
+    Create a Homebrew formula Gist with the file name and description. 
     ./$script_name -l
 
-    Create a Homebrew cask formula Gist
+    Create a Homebrew cask formula Gist with the file name and description. 
     $script_name -c
 
-    Add your description and file name.
+    Create a Homebrew Gist with your description and file name.
     ${script_name} -l -d "my new brew list" -f hello-brew
     $script_name -c -d "my new brew cask list" -f hello-cask-brew
     
     Install Homebrew formula from a Gist
-    $ ./$script_name -i
+    $script_name -i -u <Gist-URL>
 
     Install Homebrew cask formula from a Gist
-    $ ./$script_name -j
+    $script_name -j -u <Gist-CASK-URL>
 
     Get help
-    $ ./$script_name -h
+    $script_name -h
 
     Get version
-    $ ./$script_name -v
+    $script_name -v
 
 EOF
     exit 2
