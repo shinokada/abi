@@ -13,10 +13,12 @@ set -e
 version="0.0.1"
 script_name=$(basename "$0")
 leaves=""
-description="-d 'My brew list'"
-caskdescription="-d 'My brew cask list'"
-filename="-f my-brew-formula"
-caskfilename="-f my-brew-cask-formula"
+cask=""
+list_name=""
+list_description="My brew list"
+cask_description="My brew cask list"
+list_filename="my-brew-formula"
+cask_filename="my-brew-cask-formula"
 visibility="-p"
 
 usage() {
@@ -50,11 +52,15 @@ Examples:
 =========
 
     Create a Homebrew formula Gist
-    $ ./$script_name -l
+    ./$script_name -l
 
     Create a Homebrew cask formula Gist
-    $ ./$script_name -c
+    $script_name -c
 
+    Add your description and file name.
+    ${script_name} -l -d "my new brew list" -f hello-brew
+    $script_name -c -d "my new brew cask list" -f hello-cask-brew
+    
     Install Homebrew formula from a Gist
     $ ./$script_name -i
 
@@ -74,13 +80,13 @@ EOF
 while (($# > 0)); do
     case $1 in
     -d | --description)
-        description="-d ${2}"
-        caskdescription="-d $2"
+        list_description="${2}"
+        cask_description="$2"
         shift 2
         ;;
     -f | --filename)
-        filename="-f $2"
-        caskfilename="-f $2"
+        list_filename="$2"
+        cask_filename="$2"
         shift 2
         ;;
     -s | --secret)
@@ -129,7 +135,20 @@ check_cmd() {
     fi
 }
 
-fn_leaves() {
+fn_createList() {
+
+    if [[ $1 = "cask" ]]; then
+        list_name="list --cask"
+        filename="${cask_filename}"
+        description="${cask_description}"
+    elif [[ $1 = "leaves" ]]; then
+        list_name="leaves"
+        filename="${list_filename}"
+        description="${list_description}"
+    else
+        exit 1
+    fi
+
     # -p for the public. Remove it for a secret gist.
     # -w opens the browser
     # -d for a description for the gist
@@ -137,26 +156,25 @@ fn_leaves() {
     echo "In the leaves"
     echo "visibility ${visibility}, desc: ${description},  filename: ${filename}"
     echo
-    read -rp "Have you updated .env file, like APP_URL, etc? yes/y or no/n   " LEAV
+    read -rp "Do you want to create a Gist with the description: ${description}, file name: ${filename}, list: ${list_name}? yes/y or no/n   " LEAV
 
     echo "running ${visibility} ${filename} ${description}"
     # exit
     leav_ans=$(echo "$LEAV" | cut -c 1-1 | tr "[:lower:]" "[:upper:]")
     if [[ "${leav_ans}" = Y ]]; then
-        brew leaves | gh gist create -w ${visibility} ${filename} "${description}"
+        brew ${list_name} | gh gist create -w ${visibility} "-f ${filename}" "-d ${description}"
     else
         echo "Exit."
         exit
     fi
-    # brew leaves
     echo "Please save the URL."
     exit
 }
 
-fn_listcask() {
-    brew list --cask | gh gist create $visibility -w $description $caskfilename
-    echo "Please save the URL."
-}
+# fn_listcask() {
+#     brew list --cask | gh gist create $visibility -w $description $caskfilename
+#     echo "Please save the URL."
+# }
 
 check_url() {
     regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
@@ -193,9 +211,11 @@ install() {
 }
 
 main() {
-    echo "leaves is on."
-    [ $leaves = "true" ] && fn_leaves
+
+    [ $leaves = "true" ] && fn_createList leaves
+    [ $listcask = "true" ] && fn_createList cask
     exit
+
 }
 
 echo "checking os"
