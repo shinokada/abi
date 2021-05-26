@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+########################
+# Author: Shinichi Okada
+# Date: 2021-05-25
+# trbf (Transmit Brew Formula)
+###########################
+
+# set -e The set -e option instructs bash to immediately exit if any command [1] has a non-zero exit status.
+
+set -e
+
+version="0.0.1"
+script_name=$(basename "$0")
+leaves=""
+description="-d 'My brew list'"
+caskdescription="-d 'My brew cask list'"
+filename="-f my-brew-formula"
+caskfilename="-f my-brew-cask-formula"
+visibility="-p"
+
+usage() {
+    cat <<EOF
+Name: 
+=====
+$script_name
+
+Description: 
+============
+This script create a Gist from your Homebrew formula or cask. It can install Homebrew formula or cask from the Gist.
+
+Requirement:
+============
+
+brew
+gh
+
+
+Usage:
+======
+./$script_name [ -l | --leaves ] [ -c | --cask ] [ -i | --install ] [ -j | --caskinstall ][ -v | --version ] [ -h | --help ] 
+    -l | --leaves      Create a Homebrew formula Gist      
+    -c | --cask        Create a Homebrew cask formula Gist
+    -i | --install     Install Homebrew formula from a Gist
+    -j | --caskinstall Install Homebrew cask formula from a Gist 
+    -v | --version     Script version.
+    -h | --help        Show help.
+
+Examples:
+=========
+
+    Create a Homebrew formula Gist
+    $ ./$script_name -l
+
+    Create a Homebrew cask formula Gist
+    $ ./$script_name -c
+
+    Install Homebrew formula from a Gist
+    $ ./$script_name -i
+
+    Install Homebrew cask formula from a Gist
+    $ ./$script_name -j
+
+    Get help
+    $ ./$script_name -h
+
+    Get version
+    $ ./$script_name -v
+
+EOF
+    exit 2
+}
+
+while (($# > 0)); do
+    case $1 in
+    -d | --description)
+        description="-d ${2}"
+        caskdescription="-d $2"
+        shift 2
+        ;;
+    -f | --filename)
+        filename="-f $2"
+        caskfilename="-f $2"
+        shift 2
+        ;;
+    -s | --secret)
+        visibility=""
+        shift 1
+        ;;
+    -v | --version)
+        echo "$version"
+        exit
+        ;;
+    -l | --leaves)
+        leaves=true
+        shift 1
+        ;;
+    -c | --listcask)
+        listcask=true
+        shift 1
+        ;;
+    -i | --install)
+        install=true
+        shift 1
+        ;;
+    -j | --installcask)
+        installcask=true
+        shift 1
+        ;;
+    -h | --help | *)
+        usage
+        exit
+        ;;
+    esac
+done
+
+check_os() {
+    if ! [[ "$OSTYPE" =~ darwin* ]]; then
+        echo "This is meant to be run on macOS only"
+        exit
+    fi
+}
+
+check_cmd() {
+    if [[ ! $(command -v "$1") ]]; then
+        echo "It seems like you don't have $1."
+        echo "Please install $1 or add the PATH to .zshrc or .bash_profile."
+        exit 1
+    fi
+}
+
+fn_leaves() {
+    # -p for the public. Remove it for a secret gist.
+    # -w opens the browser
+    # -d for a description for the gist
+    # -f for gist name
+    echo "In the leaves"
+    echo "visibility ${visibility}, desc: ${description},  filename: ${filename}"
+    echo
+    read -rp "Have you updated .env file, like APP_URL, etc? yes/y or no/n   " LEAV
+
+    echo "running ${visibility} ${filename} ${description}"
+    # exit
+    leav_ans=$(echo "$LEAV" | cut -c 1-1 | tr "[:lower:]" "[:upper:]")
+    if [[ "${leav_ans}" = Y ]]; then
+        brew leaves | gh gist create -w ${visibility} ${filename} "${description}"
+    else
+        echo "Exit."
+        exit
+    fi
+    # brew leaves
+    echo "Please save the URL."
+    exit
+}
+
+fn_listcask() {
+    brew list --cask | gh gist create $visibility -w $description $caskfilename
+    echo "Please save the URL."
+}
+
+check_url() {
+    regex='(https?|ftp|file)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]'
+    if [[ ${1} =~ $regex ]]; then
+        if [[ $(curl --silent --head --fail "${1}/raw") ]]; then
+            # echo "URL exists: ${1}/raw"
+            echo $(curl -L --silent "${1}/raw")
+        else
+            echo "URL does not exist: ${1}"
+        fi
+    else
+        echo "Link not valid."
+    fi
+}
+
+install() {
+    if [ $1 ]; then
+        tmpfile=$(mktemp /tmp/list.XXXXXX)
+        url=$1
+        check_url $url >$tmpfile
+        array=($(cat $tmpfile))
+        for element in "${array[@]}"; do
+            # it can be taps, shellspec/shellspec/shellspec
+            # shinokada/backpack_install/backpack_install, shinokada/gitstart/gitstart
+            echo "Installing ${element}"
+            # brew install "${element}" || exit 1
+        done
+        rm "${tmpfile}"
+        exit
+    else
+        echo "Please provide your list URL."
+        exit 1
+    fi
+}
+
+main() {
+    echo "leaves is on."
+    [ $leaves = "true" ] && fn_leaves
+    exit
+}
+
+echo "checking os"
+check_os
+echo "checking brew"
+check_cmd brew
+echo "checking gh"
+check_cmd gh
+echo "Running main"
+main "$@"
+
+exit
