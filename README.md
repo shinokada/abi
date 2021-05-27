@@ -17,7 +17,7 @@ brew tap shinokada/abi && brew install abi
 
 ### Clone/Download
 
-Clone or download this repo and make a symlink to your bin directory.
+If you prefer clone/download, you clone/download this repo and make a symlink to your bin directory. Your bin directory needs to be in your PATH variable in your terminal configuration file, such as `~/.zshrc`.
 
 ```sh
 ln -sf ~/path/to/abi ~/bin/abi
