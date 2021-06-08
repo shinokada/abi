@@ -243,8 +243,8 @@ main() {
     [[ ! -z $install_type ]] && fn_install $install_type $url
 }
 
-echo "Checking OS ..."
-check_os
+# echo "Checking OS ..."
+# check_os
 echo "Checking Homebrew ..."
 check_cmd brew
 echo "Checking Github CLI, gh ..."
