@@ -15,6 +15,14 @@ abi stands for Automate Brew Install. It will:
 brew tap shinokada/abi && brew install abi
 ```
 
+### Using Awesome package manager
+
+After installing [Awesome package manager](https://github.com/shinokada/awesome)
+
+```sh
+awesome -i shinokada/abi
+```
+
 ### Clone/Download
 
 If you prefer clone/download, you clone/download this repo and make a symlink to your bin directory. Your bin directory needs to be in your PATH variable in your terminal configuration file, such as `~/.zshrc`.
