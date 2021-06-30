@@ -75,32 +75,32 @@ abi installcask <Gist-url>
 Create a Homebrew formula Gist with the file name and description.
 
 ```sh
-abi -l
+abi leaves
 ```
 
 Create a Homebrew cask formula Gist with the file name and description.
 
 ```sh
-abi -c
+abi cask
 ```
 
 Create a Homebrew Gist with your description and file name.
 
 ```sh
-abi -l -d "my new brew list" -f hello-brew
-abi -c -d "my new brew cask list" -f hello-cask-brew
+abi leaves -d "my new brew list" -f hello-brew
+abi cask -d "my new brew cask list" -f hello-cask-brew
 ```
 
 Install Homebrew formula from a Gist.
 
 ```sh
-abi -i -u <Gist-URL>
+abi install <Gist-URL>
 ```
 
 Install Homebrew cask formula from a Gist.
 
 ```sh
-abi -j -u <Gist-CASK-URL>
+abi installcask <Gist-CASK-URL>
 ```
 
 Get help.
