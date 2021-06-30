@@ -53,19 +53,22 @@ ln -sf ~/path/to/abi ~/bin/abi
 
 ## Usage
 
+```sh
+abi leaves [ -d <description> ][ -f <file name> ][-s]
+abi cask [ -d <description> ][ -f <file name> ][-s]
+abi install <Gist-url>
+abi installcask <Gist-url>
 ```
-abi [ -l | --leaves ] [ -c | --cask ] [ -i | --install ] [ -j | --caskinstall ][ -v | --version ] [ -h | --help ]
-    -d | --description Gist description. Default: "My brew list" or "My brew cask list"
-    -f | --filename    Gist file name. Default: "my-brew-formula" or "my-brew-cask-formula"
-    -s | --secret      Gist visibility. Default: -p (Public)
-    -v | --version     Script version.
-    -l | --leaves      Create a Homebrew formula Gist
-    -c | --cask        Create a Homebrew cask formula Gist
-    -i | --install     Install Homebrew formula and taps from a Gist
-    -j | --installcask Install Homebrew cask formula from a Gist
-    -u | --url         Gist URL
-    -h | --help        Show help.
-```
+
+## Options
+
+| Options         | Description                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| -d , --desc     | Gist description. Default "My brew list" and "My brew cask list"     |
+| -f , --filename | Gist file name. Default "my-brew-formula" and "my-brew-cask-formula" |
+| -s , --secret   | Gist visibility. Default -p (Public)                                 |
+| -h , --help     | Show help.                                                           |
+| -v , --version  | Script version.                                                      |
 
 ## Examples
 

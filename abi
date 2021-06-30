@@ -10,7 +10,7 @@
 
 set -e
 
-version="0.0.5"
+version="0.1.0"
 script_name=$(basename "$0")
 type=""
 install_type=""
@@ -18,58 +18,60 @@ list_description="My brew list"
 cask_description="My brew cask list"
 list_filename="my-brew-formula"
 cask_filename="my-brew-cask-formula"
-visibility="-p"
+visibility="secret"
 url=""
+
+abort() {
+    echo "$*" >&2
+    exit 1
+}
+required() { [ $# -gt 1 ] || abort "option '$1' requires an argument"; }
 
 usage() {
     cat <<EOF
-Name: 
-=====
-$script_name
+Name: $script_name
 
-Description: 
-============
-This script creates a Gist from your Homebrew formula or cask. It can install Homebrew formula or cask from the Gist.
+Description: This script creates a Gist from your Homebrew formula or cask. It can install Homebrew formula or cask from the Gist.
 
 Requirement:
-============
-
 brew
 gh
 
 
-Usage:
-======
-./$script_name [ -l | --leaves ] [ -c | --cask ] [ -i | --install ] [ -j | --caskinstall ][ -v | --version ] [ -h | --help ] 
-    -d | --description Gist description. Default: "My brew list" or "My brew cask list"
-    -f | --filename    Gist file name. Default: "my-brew-formula" or "my-brew-cask-formula"
-    -s | --secret      Gist visibility. Default: -p (Public)
-    -v | --version     Script version.
-    -l | --leaves      Create a Homebrew formula Gist      
-    -c | --cask        Create a Homebrew cask formula Gist
-    -i | --install     Install Homebrew formula and taps from a Gist
-    -j | --installcask Install Homebrew cask formula from a Gist 
-    -u | --url         Gist URL
-    -h | --help        Show help.
+Usage: ./script_name [command [--option <argument>]...] 
+./$script_name leaves [ -d <description> ][ -f <file name> ][-p]
+./$script_name cask [ -d <description> ][ -f <file name> ][-p]
+./$script_name install <Gist-url>
+./$script_name installcask <Cask-Gist-url>
+
+Options:
+    -d | --desc      Gist description. [default "My brew list" | "My brew cask list"]
+    -f | --filename  Gist file name. [default "my-brew-formula" | "my-brew-cask-formula"]
+    -p | --public    Gist visibility. [default secret ]
+    -h | --help      Show help.
+    -v | --version   Script version.
 
 Examples:
-=========
 
     Create a Homebrew formula Gist with the file name and description. 
-    $script_name -l
+    $script_name leaves
 
     Create a Homebrew cask formula Gist with the file name and description. 
-    $script_name -c
+    $script_name cask
 
     Create a Homebrew Gist with your description and file name.
-    ${script_name} -l -d "my new brew list" -f hello-brew
-    $script_name -c -d "my new brew cask list" -f hello-cask-brew
-    
+    $script_name leaves -d "my new brew list" -f hello-brew
+    $script_name cask -d "my new brew cask list" -f hello-cask-brew
+
+    Use -s if you want a secret Gist
+    $script_name leaves -s
+    $script_name cask -s
+
     Install Homebrew formula from a Gist
-    $script_name -i -u <Gist-URL>
+    $script_name install -u <Gist-URL>
 
     Install Homebrew cask formula from a Gist
-    $script_name -j -u <Gist-CASK-URL>
+    $script_name installcask -u <Gist-CASK-URL>
 
     Get help
     $script_name -h
@@ -93,33 +95,34 @@ while (($# > 0)); do
         cask_filename="${2}"
         shift 2
         ;;
-    -s | --secret)
-        visibility=""
+    -p | --public)
+        visibility="public"
         shift 1
+        ;;
+    leaves)
+        type="leaves"
+        shift 1
+        ;;
+    cask)
+        type="cask"
+        shift 1
+        ;;
+    install)
+        install_type="list"
+        required "$@" && shift
+        url="$1"
+        # url="${2}"
+        shift
+        ;;
+    installcask)
+        install_type="--cask"
+        required "$@" && shift
+        url="$1"
+        shift
         ;;
     -v | --version)
         echo "$version"
         exit
-        ;;
-    -l | --leaves)
-        type="leaves"
-        shift 1
-        ;;
-    -c | --cask)
-        type="cask"
-        shift 1
-        ;;
-    -i | --install)
-        install_type="list"
-        shift 1
-        ;;
-    -j | --installcask)
-        install_type="--cask"
-        shift 1
-        ;;
-    -u | --url)
-        url="${2}"
-        shift 2
         ;;
     -h | --help | *)
         usage
@@ -169,17 +172,29 @@ fn_createList() {
     # -d for a description for the gist
     # -f for gist name
 
-    echo "visibility ${visibility}, desc: ${description},  filename: ${filename}"
+    # echo "visibility ${visibility}, desc: ${description},  filename: ${filename}"
     echo
-    read -rp "Do you want to create a Gist with the description: ${description}, file name: ${filename}, list: ${list_name}? yes/y or no/n   " LEAV
+    read -rp "Do you want to create a Gist, description: ${description}, file name: ${filename}, list: ${list_name}, visibility ${visibility}? yes/y or no/n   " LEAV
 
-    echo "running ${visibility} ${filename} ${description}"
+    # echo "running ${visibility} ${filename} ${description}"
     # exit
     leav_ans=$(echo "$LEAV" | cut -c 1-1 | tr "[:lower:]" "[:upper:]")
-    if [[ "${leav_ans}" = Y ]]; then
-        brew ${list_name} | gh gist create -w ${visibility} "-f ${filename}" "-d ${description}"
+    if [ "$visibility" = "secret" ]; then
+        visi_opt=""
     else
-        echo "Exit."
+        visi_opt="-p"
+    fi
+    echo "visopt: $visi_opt"
+    # exit
+    if [[ "${leav_ans}" = Y ]]; then
+        echo "Starting..."
+        # brew $list_name >/tmp/abi.txt
+        # cat /tmp/abi.txt | gh gist create -w "$visopt" "-f $filename" "-d $description"
+        # echo "-f \"${filename}\"" "-d \"${description}\"" "$visi_opt"
+        # exit
+        brew ${list_name} | gh gist create -w "-f \"${filename}\"" "-d \"${description}\"" "$visi_opt"
+    else
+        echo "Exiting..."
         exit
     fi
     echo "Please save the URL."
@@ -201,34 +216,38 @@ create_raw() {
 }
 
 fn_install() {
-    echo "Installation started ..."
+    echo "Installation is starting ..."
     # check url
-    local install_type=${1}
-    if [ $2 ]; then
+    install_type=$1
+    # echo "install_type: $install_type"
+    # exit
+    if [ -n "$2" ]; then
         tmpfile=$(mktemp /tmp/list.XXXXXX)
         url=$2
-        create_raw $url >$tmpfile
-        array=($(cat $tmpfile))
+        create_raw "$url" >"$tmpfile"
+        array=($(cat "$tmpfile"))
+        # echo "${tmpfile}"
         for element in "${array[@]}"; do
             # it can be taps, shellspec/shellspec/shellspec
             # shinokada/backpack_install/backpack_install, shinokada/gitstart/gitstart
             if [[ "${element}" == *"/"* ]]; then
-                # echo "${element} has /."
                 # var="a/b/c"; echo ${var#*/} is b/c... echo ${var##*/} returns c
                 # https://stackoverflow.com/questions/9532654/expression-after-last-specific-character
                 # parameter expansion
                 tap_name="${element%/*}" # output a/b
                 formula="${element##*/}" # output c
                 echo "Running tap ${tap_name}"
-                # echo "${formula}"
-                brew tap ${tap_name}
+                echo "Tapping a formula ${tap_name}"
+                brew tap "${tap_name}"
             else
                 formula=${element}
                 # brew install <formula> doesn't need install_type
-                install_type=""
+                if [ "$install_type" = "list" ]; then
+                    install_type=""
+                fi
             fi
-            echo "Installing ${install_type} ${formula}"
-            brew install ${install_type} "${element}" || exit 1
+            echo "Installing $install_type ${formula} ..."
+            brew install $install_type "${formula}" || exit 1
         done
         rm "${tmpfile}"
         exit
@@ -239,8 +258,8 @@ fn_install() {
 }
 
 main() {
-    [[ ! -z $type ]] && fn_createList $type
-    [[ ! -z $install_type ]] && fn_install $install_type $url
+    [[ -n $type ]] && fn_createList $type
+    [[ -n $install_type ]] && fn_install "$install_type" "$url"
 }
 
 # echo "Checking OS ..."
