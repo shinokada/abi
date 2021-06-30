@@ -37,7 +37,7 @@ brew tap shinokada/abi && brew install abi
 After installing [Awesome package manager](https://github.com/shinokada/awesome)
 
 ```sh
-awesome -i shinokada/abi
+awesome install shinokada/abi
 ```
 
 ### Clone/Download
