@@ -10,7 +10,7 @@
 
 set -e
 
-version="0.1.0"
+version="0.1.1"
 script_name=$(basename "$0")
 type=""
 install_type=""
@@ -184,7 +184,7 @@ fn_createList() {
     else
         visi_opt="-p"
     fi
-    echo "visopt: $visi_opt"
+    # echo "visopt: $visi_opt"
     # exit
     if [[ "${leav_ans}" = Y ]]; then
         echo "Starting..."
@@ -192,7 +192,7 @@ fn_createList() {
         # cat /tmp/abi.txt | gh gist create -w "$visopt" "-f $filename" "-d $description"
         # echo "-f \"${filename}\"" "-d \"${description}\"" "$visi_opt"
         # exit
-        brew ${list_name} | gh gist create -w "-f \"${filename}\"" "-d \"${description}\"" "$visi_opt"
+        brew ${list_name} | gh gist create -w "-f ${filename}" "-d ${description}" $visi_opt
     else
         echo "Exiting..."
         exit
