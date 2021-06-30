@@ -11,6 +11,8 @@
 d8'          `8b 88888888P"  88
 ```
 
+[Medium article](https://betterprogramming.pub/how-to-automate-homebrew-installs-on-your-new-mac-or-linux-51e06881c5b7)
+
 ## Overview
 
 abi stands for Automate Brew Install. It will:
