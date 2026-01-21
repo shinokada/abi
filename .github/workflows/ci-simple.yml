@@ -1,0 +1,45 @@
+# Simple CI for ABI
+# Runs tests and shellcheck on every push/PR
+
+name: CI
+
+on:
+  push:
+    branches: [ main, master, improvement-1 ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x abi
+          chmod +x tests/test-abi.sh
+          chmod +x tests/verify.sh
+      
+      - name: Run verification
+        run: tests/verify.sh
+      
+      - name: Run test suite
+        run: tests/test-abi.sh
+  
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          ignore_paths: 'docs tests/README.md'
