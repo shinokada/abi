@@ -18,13 +18,27 @@ readonly NC='\033[0m'
 checks_passed=0
 checks_failed=0
 
-check() {
-    if "$@"; then
-        ((checks_passed++))
-        return 0
+# Portable timeout runner for macOS and Linux compatibility
+run_with_timeout() {
+    local duration="$1"
+    shift
+    local seconds="${duration%s}" # strip trailing 's' if present
+    if command -v timeout &>/dev/null; then
+        timeout "${duration}" "$@"
+    elif command -v gtimeout &>/dev/null; then
+        gtimeout "${duration}" "$@"
     else
-        ((checks_failed++))
-        return 1
+        "$@" &
+        local pid=$!
+        (
+            sleep "${seconds}"
+            kill -0 "${pid}" 2>/dev/null && kill "${pid}"
+        ) &
+        local killer=$!
+        wait "${pid}"
+        local status=$?
+        kill "${killer}" 2>/dev/null || true
+        return "${status}"
     fi
 }
 
@@ -66,12 +80,11 @@ echo -e "${BLUE}Testing basic commands...${NC}"
 if [[ ! -x "${ABI_SCRIPT}" ]]; then
     echo -e "${RED}✗${NC} Cannot test (script not executable)"
     ((checks_failed++))
-    ((checks_failed++))
-elif version=$(timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
+elif version=$(run_with_timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
     if [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo -e "${GREEN}✓${NC} Version command works: ${version}"
         ((checks_passed++))
-        
+
         if [[ "${version}" == "0.2.0" ]]; then
             echo -e "${GREEN}✓${NC} Running improved version"
             ((checks_passed++))
@@ -91,7 +104,7 @@ fi
 if [[ ! -x "${ABI_SCRIPT}" ]]; then
     echo -e "${RED}✗${NC} Cannot test (script not executable)"
     ((checks_failed++))
-elif timeout 3s "${ABI_SCRIPT}" --help &>/dev/null; then
+elif run_with_timeout 3s "${ABI_SCRIPT}" --help &>/dev/null; then
     echo -e "${GREEN}✓${NC} Help command works"
     ((checks_passed++))
 else
@@ -113,7 +126,7 @@ fi
 if command -v gh &>/dev/null; then
     echo -e "${GREEN}✓${NC} GitHub CLI is installed"
     ((checks_passed++))
-    
+
     if gh auth status &>/dev/null; then
         echo -e "${GREEN}✓${NC} GitHub CLI is authenticated"
         ((checks_passed++))

@@ -56,7 +56,7 @@ log() {
     local message="$1"
     echo -e "${message}"
     if [[ -n "${log_file}" ]]; then
-        echo -e "${message}" | sed 's/\x1b\[[0-9;]*m//g' >> "${log_file}"
+        echo -e "${message}" | sed 's/\x1b\[[0-9;]*m//g' >>"${log_file}"
     fi
 }
 
@@ -81,63 +81,61 @@ abort() {
     exit 1
 }
 
-required() { 
+required() {
     [[ $# -gt 1 ]] || abort "option '$1' requires an argument"
 }
 
 usage() {
-    cat <<EOF
-${BLUE}Name:${NC} ${SCRIPT_NAME}
-
-${BLUE}Description:${NC} This script creates a Gist from your Homebrew formula or cask. 
-It can install Homebrew formula or cask from the Gist.
-
-${BLUE}Requirements:${NC}
-  - brew (Homebrew)
-  - gh (GitHub CLI)
-
-${BLUE}Usage:${NC}
-  ${SCRIPT_NAME} leaves [-d <description>] [-f <filename>] [-p]
-  ${SCRIPT_NAME} cask [-d <description>] [-f <filename>] [-p]
-  ${SCRIPT_NAME} install <Gist-url> [--dry-run] [--log <file>]
-  ${SCRIPT_NAME} installcask <Gist-url> [--dry-run] [--log <file>]
-
-${BLUE}Options:${NC}
-  -d, --desc <text>       Gist description [default: "My brew list" | "My brew cask list"]
-  -f, --filename <name>   Gist file name [default: "my-brew-formula" | "my-brew-cask-formula"]
-  -p, --public            Make Gist public [default: secret]
-      --dry-run           Preview installation without actually installing
-      --log <file>        Write log to specified file
-  -V, --verbose           Enable verbose output
-  -h, --help              Show this help message
-  -v, --version           Show script version
-
-${BLUE}Examples:${NC}
-
-  ${GREEN}# Create a Homebrew formula Gist${NC}
-  ${SCRIPT_NAME} leaves
-
-  ${GREEN}# Create a Homebrew cask formula Gist${NC}
-  ${SCRIPT_NAME} cask
-
-  ${GREEN}# Create a Gist with custom description and filename${NC}
-  ${SCRIPT_NAME} leaves -d "my new brew list" -f hello-brew
-  ${SCRIPT_NAME} cask -d "my new brew cask list" -f hello-cask-brew
-
-  ${GREEN}# Create a public Gist${NC}
-  ${SCRIPT_NAME} leaves -p
-  ${SCRIPT_NAME} cask -p
-
-  ${GREEN}# Install from a Gist (preview first)${NC}
-  ${SCRIPT_NAME} install --dry-run <Gist-URL>
-
-  ${GREEN}# Install from a Gist with logging${NC}
-  ${SCRIPT_NAME} install --log install.log <Gist-URL>
-
-  ${GREEN}# Install Homebrew cask formula from a Gist${NC}
-  ${SCRIPT_NAME} installcask <Gist-CASK-URL>
-
-EOF
+    echo -e "${BLUE}Name:${NC} ${SCRIPT_NAME}"
+    echo ""
+    echo -e "${BLUE}Description:${NC} This script creates a Gist from your Homebrew formula or cask."
+    echo "It can install Homebrew formula or cask from the Gist."
+    echo ""
+    echo -e "${BLUE}Requirements:${NC}"
+    echo "  - brew (Homebrew)"
+    echo "  - gh (GitHub CLI)"
+    echo ""
+    echo -e "${BLUE}Usage:${NC}"
+    echo "  ${SCRIPT_NAME} leaves [-d <description>] [-f <filename>] [-p]"
+    echo "  ${SCRIPT_NAME} cask [-d <description>] [-f <filename>] [-p]"
+    echo "  ${SCRIPT_NAME} install <Gist-url> [--dry-run] [--log <file>]"
+    echo "  ${SCRIPT_NAME} installcask <Gist-url> [--dry-run] [--log <file>]"
+    echo ""
+    echo -e "${BLUE}Options:${NC}"
+    echo "  -d, --desc <text>       Gist description [default: \"My brew list\" | \"My brew cask list\"]"
+    echo "  -f, --filename <name>   Gist file name [default: \"my-brew-formula\" | \"my-brew-cask-formula\"]"
+    echo "  -p, --public            Make Gist public [default: secret]"
+    echo "      --dry-run           Preview installation without actually installing"
+    echo "      --log <file>        Write log to specified file"
+    echo "  -V, --verbose           Enable verbose output"
+    echo "  -h, --help              Show this help message"
+    echo "  -v, --version           Show script version"
+    echo ""
+    echo -e "${BLUE}Examples:${NC}"
+    echo ""
+    echo -e "  ${GREEN}# Create a Homebrew formula Gist${NC}"
+    echo "  ${SCRIPT_NAME} leaves"
+    echo ""
+    echo -e "  ${GREEN}# Create a Homebrew cask formula Gist${NC}"
+    echo "  ${SCRIPT_NAME} cask"
+    echo ""
+    echo -e "  ${GREEN}# Create a Gist with custom description and filename${NC}"
+    echo "  ${SCRIPT_NAME} leaves -d \"my new brew list\" -f hello-brew"
+    echo "  ${SCRIPT_NAME} cask -d \"my new brew cask list\" -f hello-cask-brew"
+    echo ""
+    echo -e "  ${GREEN}# Create a public Gist${NC}"
+    echo "  ${SCRIPT_NAME} leaves -p"
+    echo "  ${SCRIPT_NAME} cask -p"
+    echo ""
+    echo -e "  ${GREEN}# Install from a Gist (preview first)${NC}"
+    echo "  ${SCRIPT_NAME} install --dry-run <Gist-URL>"
+    echo ""
+    echo -e "  ${GREEN}# Install from a Gist with logging${NC}"
+    echo "  ${SCRIPT_NAME} install --log install.log <Gist-URL>"
+    echo ""
+    echo -e "  ${GREEN}# Install Homebrew cask formula from a Gist${NC}"
+    echo "  ${SCRIPT_NAME} installcask <Gist-CASK-URL>"
+    echo ""
     exit 0
 }
 
@@ -231,8 +229,24 @@ check_cmd() {
 
 check_gh_auth() {
     # Use timeout to prevent hanging in non-interactive environments
-    if ! timeout 5s gh auth status &>/dev/null; then
-        abort "GitHub CLI (gh) is not authenticated. Please run 'gh auth login' first"
+    local timeout_cmd
+    if command -v timeout &>/dev/null; then
+        timeout_cmd="timeout"
+    elif command -v gtimeout &>/dev/null; then
+        timeout_cmd="gtimeout"
+    else
+        timeout_cmd=""
+    fi
+
+    if [[ -n "${timeout_cmd}" ]]; then
+        if ! ${timeout_cmd} 5s gh auth status &>/dev/null; then
+            abort "GitHub CLI (gh) is not authenticated. Please run 'gh auth login' first"
+        fi
+    else
+        # Fallback without timeout for systems without timeout/gtimeout
+        if ! gh auth status &>/dev/null; then
+            abort "GitHub CLI (gh) is not authenticated. Please run 'gh auth login' first"
+        fi
     fi
     log_info "GitHub CLI authentication verified"
 }
@@ -242,7 +256,7 @@ validate_url() {
     if ! [[ ${url_to_check} =~ ${URL_REGEX} ]]; then
         abort "Invalid URL format: ${url_to_check}"
     fi
-    
+
     # Check if it's a GitHub Gist URL
     if ! [[ ${url_to_check} =~ gist\.github\.com ]]; then
         log_warning "URL does not appear to be a GitHub Gist"
@@ -252,24 +266,24 @@ validate_url() {
 fetch_gist_content() {
     local gist_url="$1"
     local output_file="$2"
-    
+
     validate_url "${gist_url}"
-    
+
     local raw_url="${gist_url}/raw"
     log_info "Fetching Gist content from: ${raw_url}"
-    
+
     if ! curl --silent --head --fail --max-time 10 "${raw_url}" &>/dev/null; then
         abort "Failed to access Gist URL: ${raw_url}"
     fi
-    
-    if ! curl -L --silent --fail --max-time 30 "${raw_url}" > "${output_file}"; then
+
+    if ! curl -L --silent --fail --max-time 30 "${raw_url}" >"${output_file}"; then
         abort "Failed to download Gist content"
     fi
-    
+
     if [[ ! -s "${output_file}" ]]; then
         abort "Downloaded Gist content is empty"
     fi
-    
+
     log_success "Successfully fetched Gist content"
 }
 
@@ -281,7 +295,7 @@ fn_createList() {
     local visi_opt=""
 
     log_info "Creating Gist from Homebrew ${list_type}..."
-    
+
     if [[ ${list_type} == "cask" ]]; then
         list_name="list --cask"
         filename="${cask_filename}"
@@ -305,39 +319,39 @@ fn_createList() {
     echo "  List command: brew ${list_name}"
     echo "  Visibility: ${visibility}"
     echo ""
-    
+
     read -rp "Do you want to create this Gist? (yes/no): " response
-    
+
     case "${response}" in
-        [Yy]|[Yy][Ee][Ss])
-            log_info "Creating Gist..."
-            
-            # shellcheck disable=SC2086
-            if brew ${list_name} | gh gist create -w -f "${filename}" -d "${description}" ${visi_opt}; then
-                log_success "Gist created successfully!"
-                log_info "Please save the URL that was opened in your browser"
-            else
-                abort "Failed to create Gist"
-            fi
-            ;;
-        *)
-            log_info "Gist creation cancelled"
-            exit 0
-            ;;
+    [Yy] | [Yy][Ee][Ss])
+        log_info "Creating Gist..."
+
+        # shellcheck disable=SC2086
+        if brew ${list_name} | gh gist create -w -f "${filename}" -d "${description}" ${visi_opt}; then
+            log_success "Gist created successfully!"
+            log_info "Please save the URL that was opened in your browser"
+        else
+            abort "Failed to create Gist"
+        fi
+        ;;
+    *)
+        log_info "Gist creation cancelled"
+        exit 0
+        ;;
     esac
 }
 
 install_package() {
     local pkg_install_type="$1"
     local formula="$2"
-    
+
     if ${dry_run}; then
         log_info "[DRY RUN] Would install: brew install ${pkg_install_type} ${formula}"
         return 0
     fi
-    
+
     log_info "Installing ${formula}..."
-    
+
     # shellcheck disable=SC2086
     if brew install ${pkg_install_type} "${formula}"; then
         log_success "Installed ${formula}"
@@ -353,14 +367,14 @@ install_package() {
 
 tap_formula() {
     local tap_name="$1"
-    
+
     if ${dry_run}; then
         log_info "[DRY RUN] Would tap: ${tap_name}"
         return 0
     fi
-    
+
     log_info "Tapping ${tap_name}..."
-    
+
     if brew tap "${tap_name}"; then
         log_success "Tapped ${tap_name}"
         return 0
@@ -373,89 +387,89 @@ tap_formula() {
 fn_install() {
     local pkg_install_type="$1"
     local gist_url="$2"
-    
+
     if [[ -z "${gist_url}" ]]; then
         abort "Please provide a Gist URL"
     fi
-    
+
     tmpfile=$(mktemp /tmp/abi-list.XXXXXX)
-    
+
     fetch_gist_content "${gist_url}" "${tmpfile}"
-    
+
     # Read packages into array
-    mapfile -t packages < "${tmpfile}"
+    mapfile -t packages <"${tmpfile}"
     total_packages=${#packages[@]}
-    
+
     if [[ ${total_packages} -eq 0 ]]; then
         abort "No packages found in Gist"
     fi
-    
+
     log_info "Found ${total_packages} package(s) to process"
-    
+
     if ${dry_run}; then
         log_warning "DRY RUN MODE - No packages will be installed"
         echo ""
     fi
-    
+
     # Display package list
     log_info "Package list:"
     for pkg in "${packages[@]}"; do
         echo "  - ${pkg}"
     done
     echo ""
-    
+
     if ! ${dry_run}; then
         read -rp "Do you want to proceed with installation? (yes/no): " response
         case "${response}" in
-            [Yy]|[Yy][Ee][Ss])
-                log_info "Starting installation..."
-                ;;
-            *)
-                log_info "Installation cancelled"
-                exit 0
-                ;;
+        [Yy] | [Yy][Ee][Ss])
+            log_info "Starting installation..."
+            ;;
+        *)
+            log_info "Installation cancelled"
+            exit 0
+            ;;
         esac
     fi
-    
+
     # Process each package
     for element in "${packages[@]}"; do
         # Skip empty lines and comments
         [[ -z "${element}" ]] || [[ "${element}" =~ ^# ]] && continue
-        
+
         if [[ "${element}" == *"/"* ]]; then
             # Handle tap formulas (e.g., shinokada/abi/abi)
             tap_name="${element%/*}"
             formula="${element##*/}"
-            
-            tap_formula "${tap_name}"
-            
+
+            tap_formula "${tap_name}" || true
+
             # Preserve install type for cask formulas from taps
             local tap_install_opt="${pkg_install_type}"
             if [[ "${tap_install_opt}" == "list" ]]; then
                 tap_install_opt=""
             fi
-            install_package "${tap_install_opt}" "${formula}"
+            install_package "${tap_install_opt}" "${formula}" || true
         else
             # Regular formula
             formula="${element}"
             local install_opt="${pkg_install_type}"
-            
+
             # Regular formulas don't need install_type
             if [[ "${install_opt}" == "list" ]]; then
                 install_opt=""
             fi
-            
-            install_package "${install_opt}" "${formula}"
+
+            install_package "${install_opt}" "${formula}" || true
         fi
     done
-    
+
     # Print summary
     echo ""
     log_info "===== Installation Summary ====="
     echo "  Total packages: ${total_packages}"
     echo "  Successfully installed: ${installed_packages}"
     echo "  Failed: ${failed_packages}"
-    
+
     if [[ ${failed_packages} -gt 0 ]]; then
         echo ""
         log_error "Failed packages:"
@@ -464,35 +478,36 @@ fn_install() {
         done
     fi
     echo ""
-    
+
     if ${dry_run}; then
         log_info "This was a dry run. No packages were actually installed."
     fi
 }
 
 main() {
+    # If no command specified, show usage immediately without checks
+    if [[ -z "${type}" ]] && [[ -z "${install_type}" ]]; then
+        usage
+    fi
+
     # Check requirements
     log_info "Checking system requirements..."
     check_os
     check_cmd brew
     check_cmd gh
-    
+
     # Check GitHub CLI authentication for operations that need it
     if [[ -n "${type}" ]] || [[ -n "${install_type}" ]]; then
         check_gh_auth
     fi
-    
+
     # Execute requested operation
     if [[ -n "${type}" ]]; then
         fn_createList "${type}"
     elif [[ -n "${install_type}" ]]; then
         fn_install "${install_type}" "${url}"
-    else
-        log_error "No command specified"
-        echo ""
-        usage
     fi
-    
+
     log_success "Task completed successfully!"
 }
 

@@ -151,7 +151,7 @@ Not sure yet? Keep the example files:
 ### Option 1: Simple CI
 
 ```bash
-cd /Users/shinichiokada/Bash/abi
+cd /path/to/abi  # Navigate to your local abi repository
 mv .github/workflows/ci-simple.yml.example .github/workflows/ci.yml
 git add .github
 git commit -m "Add CI workflow"
@@ -163,7 +163,7 @@ Check: https://github.com/YOUR-USERNAME/abi/actions
 ### Option 2: Comprehensive CI
 
 ```bash
-cd /Users/shinichiokada/Bash/abi
+cd /path/to/abi  # Navigate to your local abi repository
 mv .github/workflows/ci-comprehensive.yml.example .github/workflows/ci.yml
 git add .github
 git commit -m "Add comprehensive CI"
