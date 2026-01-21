@@ -1,7 +1,3 @@
-<p align="center">
-<a href='https://ko-fi.com/Z8Z2CHALG' target='_blank'><img height='42' style='border:0px;height:42px;' src='https://storage.ko-fi.com/cdn/kofi3.png?v=3' alt='Buy Me a Coffee at ko-fi.com' /></a>
-</p>
-
 # ABI: Automate Brew Install
 
 ```sh
@@ -15,138 +11,404 @@
 d8'          `8b 88888888P"  88
 ```
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 [Medium article](https://betterprogramming.pub/how-to-automate-homebrew-installs-on-your-new-mac-or-linux-51e06881c5b7)
 
 ## Overview
 
-abi stands for Automate Brew Install. It will:
+**abi** (Automate Brew Install) is a powerful command-line tool that:
 
-- create a Gist of your Homebrew formula or cask
-- install Homebrew formula or cask from a Gist
+- 📝 Creates GitHub Gists from your Homebrew formula or cask lists
+- 🚀 Installs Homebrew packages from Gists with one command
+- 🎨 Provides colored, user-friendly output
+- 🔍 Offers dry-run mode to preview installations
+- 📊 Shows detailed installation summaries
+- 🛡️ Includes robust error handling and validation
 
-## Requirement
+Perfect for:
+- Setting up new machines quickly
+- Sharing your Homebrew setup with teams
+- Backing up your package lists
+- Synchronizing packages across multiple machines
 
-UNIX-lie (Tested on Ubuntu and MacOS.)
+## ✨ New in Version 0.2.0
+
+- 🎨 **Colored output** for better readability
+- 🔍 **Dry-run mode** to preview installations
+- 📝 **Logging support** to save installation logs
+- ✅ **Interactive confirmations** before operations
+- 📊 **Installation summaries** with statistics
+- 🛡️ **Enhanced error handling** and validation
+- ⚡ **ShellCheck compliant** code
+- 🧪 **Test suite** included
+
+## Requirements
+
+- **Operating System**: macOS or Linux
+- **Homebrew**: [Install Homebrew](https://brew.sh/)
+- **GitHub CLI (gh)**: [Install gh](https://cli.github.com/)
 
 ## Installation
 
-### Using Homebrew
+### Using Homebrew (Recommended)
 
-```sh
-brew tap shinokada/abi && brew install abi
+```bash
+brew tap shinokada/abi
+brew install abi
 ```
 
-### Using Awesome package manager
+### Using Awesome Package Manager
 
-After installing [Awesome package manager](https://github.com/shinokada/awesome)
+After installing [Awesome package manager](https://github.com/shinokada/awesome):
 
-```sh
+```bash
 awesome install shinokada/abi
 ```
 
-### Clone/Download
+### Manual Installation
 
-If you prefer clone/download, you clone/download this repo and make a symlink to your bin directory. Your bin directory needs to be in your PATH variable in your terminal configuration file, such as `~/.zshrc`.
+Clone this repository and create a symlink:
 
-```sh
-ln -sf ~/path/to/abi ~/bin/abi
+```bash
+git clone https://github.com/shinokada/abi.git
+cd abi
+chmod +x abi
+ln -sf "$(pwd)/abi" ~/bin/abi
 ```
 
-## Dependencies
+Make sure `~/bin` is in your `$PATH`.
 
-- Homebrew
-- Github CLI (gh)
+## Quick Start
 
-## Usage
+### 1. Authenticate GitHub CLI
 
-```sh
-abi leaves [ -d <description> ][ -f <file name> ][-s]
-abi cask [ -d <description> ][ -f <file name> ][-s]
-abi install <Gist-url>
-abi installcask <Gist-url>
+```bash
+gh auth login
 ```
 
-## Options
+### 2. Create a Gist from your packages
 
-| Options         | Description                                                          |
-| --------------- | -------------------------------------------------------------------- |
-| -d , --desc     | Gist description. Default "My brew list" and "My brew cask list"     |
-| -f , --filename | Gist file name. Default "my-brew-formula" and "my-brew-cask-formula" |
-| -s , --secret   | Gist visibility. Default -p (Public)                                 |
-| -h , --help     | Show help.                                                           |
-| -v , --version  | Script version.                                                      |
-
-## Examples
-
-Create a Homebrew formula Gist with the file name and description.
-
-```sh
+```bash
+# Create a Gist of your Homebrew formulas
 abi leaves
-```
 
-Create a Homebrew cask formula Gist with the file name and description.
-
-```sh
+# Create a Gist of your Homebrew casks
 abi cask
 ```
 
-Create a Homebrew Gist with your description and file name.
+### 3. Install packages from a Gist
 
-```sh
-abi leaves -d "my new brew list" -f hello-brew
-abi cask -d "my new brew cask list" -f hello-cask-brew
+```bash
+# Preview what would be installed (recommended first step)
+abi install --dry-run <your-gist-url>
+
+# Install packages
+abi install <your-gist-url>
 ```
 
-Install Homebrew formula from a Gist.
+## Usage
 
-```sh
-abi install <Gist-URL>
+### Commands
+
+#### Create Gists
+
+```bash
+# Create formula list Gist
+abi leaves [OPTIONS]
+
+# Create cask list Gist  
+abi cask [OPTIONS]
 ```
 
-Install Homebrew cask formula from a Gist.
+#### Install from Gists
 
-```sh
-abi installcask <Gist-CASK-URL>
+```bash
+# Install formulas
+abi install [OPTIONS] <gist-url>
+
+# Install casks
+abi installcask [OPTIONS] <gist-url>
 ```
 
-Get help.
+### Options
 
-```sh
-abi -h
+| Option                  | Description                                                             |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `-d, --desc <text>`     | Set Gist description (default: "My brew list" / "My brew cask list")    |
+| `-f, --filename <name>` | Set Gist filename (default: "my-brew-formula" / "my-brew-cask-formula") |
+| `-p, --public`          | Make Gist public (default: secret)                                      |
+| `--dry-run`             | Preview installation without installing                                 |
+| `--log <file>`          | Save log to specified file                                              |
+| `-V, --verbose`         | Enable verbose output                                                   |
+| `-h, --help`            | Show help message                                                       |
+| `-v, --version`         | Show version                                                            |
+
+## Examples
+
+### Creating Gists
+
+**Create a formula Gist with default settings:**
+```bash
+abi leaves
 ```
 
-Get the version.
-
-```sh
-abi -v
+**Create a cask Gist with custom description and filename:**
+```bash
+abi cask -d "My Essential Apps" -f "essential-casks"
 ```
 
-## Reference
+**Create a public Gist:**
+```bash
+abi leaves -p
+```
+
+**Create with all custom options:**
+```bash
+abi leaves -d "Development Tools" -f "dev-tools" -p
+```
+
+### Installing from Gists
+
+**Preview before installing (recommended):**
+```bash
+abi install --dry-run https://gist.github.com/username/abc123
+```
+
+**Install with logging:**
+```bash
+abi install --log install.log https://gist.github.com/username/abc123
+```
+
+**Install casks:**
+```bash
+abi installcask https://gist.github.com/username/def456
+```
+
+**Install with verbose output:**
+```bash
+abi install --verbose https://gist.github.com/username/abc123
+```
+
+## Features in Detail
+
+### 🎨 Colored Output
+
+ABI uses colors to make output more readable:
+- 🔵 **Blue**: Informational messages
+- 🟢 **Green**: Success messages  
+- 🟡 **Yellow**: Warnings
+- 🔴 **Red**: Errors
+
+Colors are automatically removed from log files.
+
+### 🔍 Dry-Run Mode
+
+Test installations safely without making changes:
+
+```bash
+abi install --dry-run https://gist.github.com/username/abc123
+```
+
+This shows:
+- ✅ Which packages would be installed
+- ✅ Which taps would be added
+- ✅ Total number of packages
+- ❌ No actual changes made
+
+### 📊 Installation Summary
+
+After installation, see a detailed summary:
+
+```text
+===== Installation Summary =====
+  Total packages: 15
+  Successfully installed: 13
+  Failed: 2
+
+Failed packages:
+  - package-that-failed-1
+  - package-that-failed-2
+```
+
+### ✅ Interactive Confirmations
+
+Before important operations, ABI shows what it will do and asks for confirmation:
+
+```text
+Gist Configuration:
+  Description: My brew list
+  Filename: my-brew-formula
+  List command: brew leaves
+  Visibility: secret
+
+Do you want to create this Gist? (yes/no):
+```
+
+### 🛡️ Robust Error Handling
+
+ABI validates:
+- ✅ URLs before fetching
+- ✅ GitHub CLI authentication
+- ✅ Gist content (not empty)
+- ✅ Network connectivity
+- ✅ Command availability
+
+Clear error messages help you resolve issues quickly.
+
+## Advanced Usage
+
+### Handling Taps
+
+ABI automatically handles Homebrew taps. If your Gist contains:
+
+```text
+shinokada/abi/abi
+shinokada/gitstart/gitstart
+jq
+wget
+```
+
+ABI will:
+1. Tap `shinokada/abi`
+2. Install `abi` from that tap
+3. Tap `shinokada/gitstart`
+4. Install `gitstart` from that tap
+5. Install `jq` from main repository
+6. Install `wget` from main repository
+
+### Logging Installation
+
+Save detailed logs for troubleshooting:
+
+```bash
+abi install --log ~/logs/brew-install-$(date +%Y%m%d).log <gist-url>
+```
+
+The log file contains:
+- All installation steps
+- Success/failure status
+- Error messages
+- Summary statistics
+
+### Creating Backups
+
+Before major changes:
+
+```bash
+# Create a backup of current packages
+abi leaves -d "Backup $(date +%Y-%m-%d)" -f "backup-$(date +%Y%m%d)"
+
+# Test restore with dry-run
+abi install --dry-run <backup-gist-url>
+```
+
+## Troubleshooting
+
+### "gh is not authenticated"
+
+```bash
+gh auth login
+```
+
+Follow the prompts to authenticate.
+
+### "Command 'brew' not found"
+
+Install Homebrew:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### "Failed to access Gist URL"
+
+Check that:
+1. URL is correct and complete
+2. You have internet connectivity
+3. Gist exists and is accessible
+4. You're authenticated with `gh`
+
+### Installation fails for specific packages
+
+Check the summary for failed packages and install them manually:
+```bash
+brew install <failed-package>
+```
+
+## Development
+
+### Running Tests
+
+```bash
+chmod +x tests/test-abi.sh
+./tests/test-abi.sh
+```
+
+### Installing Pre-commit Hook
+
+```bash
+cp pre-commit-hook .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+This runs shellcheck before each commit.
+
+### Code Quality
+
+The codebase follows:
+- ShellCheck recommendations
+- Bash best practices
+- Consistent formatting (4-space indentation)
+- Comprehensive error handling
+
+## Roadmap
+
+Future enhancements planned:
+
+- [ ] Brewfile import/export support
+- [ ] Diff command to compare installations
+- [ ] Update command for packages
+- [ ] Configuration file (~/.abirc)
+- [ ] Multiple Gist URL support
+- [ ] Interactive package selection (fzf)
+- [ ] Rollback mechanism
+- [ ] GitHub Actions workflows
+- [ ] Package manager integration
+
+## Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `./tests/test-abi.sh`
+5. Submit a pull request
+
+## Changelog
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md) for detailed changelog.
 
 ## Author
 
-Shinichi Okada
+**Shinichi Okada**
+- GitHub: [@shinokada](https://github.com/shinokada)
+- Medium: [Better Programming](https://betterprogramming.pub/how-to-automate-homebrew-installs-on-your-new-mac-or-linux-51e06881c5b7)
 
-## Licence
+## License
 
-MIT License
+MIT License - see [LICENSE](license.txt) for details.
 
-Copyright (c) 2021 Shinichi Okada
+Copyright (c) 2021-2025 Shinichi Okada
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## Support
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+If you find this tool useful, consider:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+<a href='https://ko-fi.com/Z8Z2CHALG' target='_blank'><img height='42' style='border:0px;height:42px;' src='https://storage.ko-fi.com/cdn/kofi3.png?v=3' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+## Acknowledgments
+
+- Homebrew team for the excellent package manager
+- GitHub CLI team for the gh tool
+- Community contributors and users

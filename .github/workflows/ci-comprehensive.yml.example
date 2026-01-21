@@ -1,0 +1,92 @@
+# Comprehensive CI for ABI
+# Tests on multiple OS, includes linting and badges
+
+name: CI
+
+on:
+  push:
+    branches: [ main, master, improvement-1 ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x abi
+          chmod +x tests/test-abi.sh
+          chmod +x tests/verify.sh
+      
+      - name: Check Homebrew
+        run: brew --version
+      
+      - name: Run verification
+        run: tests/verify.sh
+      
+      - name: Run test suite
+        run: tests/test-abi.sh
+  
+  test-linux:
+    name: Test on Linux
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          # Install Homebrew on Linux
+          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x abi
+          chmod +x tests/test-abi.sh
+          chmod +x tests/verify.sh
+      
+      - name: Run verification
+        run: tests/verify.sh
+      
+      - name: Run test suite
+        run: tests/test-abi.sh
+  
+  shellcheck:
+    name: ShellCheck Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          ignore_paths: 'docs'
+          severity: warning
+  
+  version-check:
+    name: Version Consistency
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check version in abi script
+        run: |
+          VERSION=$(grep '^readonly VERSION=' abi | sed 's/.*"\(.*\)"/\1/')
+          echo "Found version: $VERSION"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Invalid version format"
+            exit 1
+          fi
