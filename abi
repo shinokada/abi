@@ -86,6 +86,7 @@ required() {
 }
 
 usage() {
+    local exit_code="${1:-0}"
     echo -e "${BLUE}Name:${NC} ${SCRIPT_NAME}"
     echo ""
     echo -e "${BLUE}Description:${NC} This script creates a Gist from your Homebrew formula or cask."
@@ -136,7 +137,7 @@ usage() {
     echo -e "  ${GREEN}# Install Homebrew cask formula from a Gist${NC}"
     echo "  ${SCRIPT_NAME} installcask <Gist-CASK-URL>"
     echo ""
-    exit 0
+    exit "${exit_code}"
 }
 
 # Parse command line arguments
@@ -206,8 +207,7 @@ while (($# > 0)); do
     *)
         log_error "Unknown option: $1"
         echo ""
-        usage >&2
-        exit 1
+        usage 1 >&2
         ;;
     esac
 done

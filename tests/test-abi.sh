@@ -41,7 +41,6 @@ fi
 # Colors
 readonly GREEN='\033[0;32m'
 readonly RED='\033[0;31m'
-readonly YELLOW='\033[1;33m'
 readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
