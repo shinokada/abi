@@ -129,10 +129,10 @@ usage() {
     echo "  ${SCRIPT_NAME} cask -p"
     echo ""
     echo -e "  ${GREEN}# Install from a Gist (preview first)${NC}"
-    echo "  ${SCRIPT_NAME} install --dry-run <Gist-URL>"
+    echo "  ${SCRIPT_NAME} install <Gist-URL> --dry-run"
     echo ""
     echo -e "  ${GREEN}# Install from a Gist with logging${NC}"
-    echo "  ${SCRIPT_NAME} install --log install.log <Gist-URL>"
+    echo "  ${SCRIPT_NAME} install <Gist-URL> --log install.log"
     echo ""
     echo -e "  ${GREEN}# Install Homebrew cask formula from a Gist${NC}"
     echo "  ${SCRIPT_NAME} installcask <Gist-CASK-URL>"
@@ -396,8 +396,11 @@ fn_install() {
 
     fetch_gist_content "${gist_url}" "${tmpfile}"
 
-    # Read packages into array
-    mapfile -t packages <"${tmpfile}"
+    # Read packages into array (portable to Bash 3.2)
+    local -a packages=()
+    while IFS= read -r line; do
+        packages+=("${line}")
+    done <"${tmpfile}"
     total_packages=${#packages[@]}
 
     if [[ ${total_packages} -eq 0 ]]; then
