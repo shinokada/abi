@@ -230,7 +230,8 @@ check_cmd() {
 }
 
 check_gh_auth() {
-    if ! gh auth status &>/dev/null; then
+    # Use timeout to prevent hanging in non-interactive environments
+    if ! timeout 5s gh auth status &>/dev/null; then
         abort "GitHub CLI (gh) is not authenticated. Please run 'gh auth login' first"
     fi
     log_info "GitHub CLI authentication verified"
@@ -427,7 +428,13 @@ fn_install() {
             formula="${element##*/}"
             
             tap_formula "${tap_name}"
-            install_package "" "${formula}"
+            
+            # Preserve install type for cask formulas from taps
+            local tap_install_opt="${pkg_install_type}"
+            if [[ "${tap_install_opt}" == "list" ]]; then
+                tap_install_opt=""
+            fi
+            install_package "${tap_install_opt}" "${formula}"
         else
             # Regular formula
             formula="${element}"

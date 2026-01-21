@@ -80,7 +80,7 @@ These require manual testing:
 ## Expected Output
 
 ### verify.sh Success
-```
+```text
 ╔═══════════════════════════════════════════════════╗
 ║     ABI Installation Verification                 ║
 ╚═══════════════════════════════════════════════════╝
@@ -110,7 +110,7 @@ Failed: 0
 ```
 
 ### test-abi.sh Success
-```
+```text
 ╔═══════════════════════════════════════════════════╗
 ║         ABI Script Test Suite                     ║
 ╚═══════════════════════════════════════════════════╝
@@ -236,7 +236,7 @@ See `../docs/PRE-COMMIT-HOOK.md` for details.
 
 ## Files in This Directory
 
-```
+```text
 tests/
 ├── test-abi.sh          # Full test suite (5 tests)
 ├── verify.sh            # Quick verification

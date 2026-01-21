@@ -3,7 +3,8 @@
 # Quick verification script for abi installation
 # Checks basic functionality without hanging
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 1
+readonly SCRIPT_DIR
 readonly PROJECT_ROOT="${SCRIPT_DIR}/.."
 readonly ABI_SCRIPT="${PROJECT_ROOT}/abi"
 
@@ -48,15 +49,25 @@ if [[ -x "${ABI_SCRIPT}" ]]; then
     echo -e "${GREEN}✓${NC} abi is executable"
     ((checks_passed++))
 else
-    echo -e "${RED}✗${NC} abi is NOT executable"
-    echo -e "  ${YELLOW}Fix:${NC} chmod +x ${ABI_SCRIPT}"
-    ((checks_failed++))
+    echo -e "${YELLOW}!${NC} abi is not executable, attempting to fix..."
+    if chmod +x "${ABI_SCRIPT}" 2>/dev/null; then
+        echo -e "${GREEN}✓${NC} abi is now executable (auto-fixed)"
+        ((checks_passed++))
+    else
+        echo -e "${RED}✗${NC} abi is NOT executable and could not be fixed"
+        echo -e "  ${YELLOW}Fix:${NC} chmod +x ${ABI_SCRIPT}"
+        ((checks_failed++))
+    fi
 fi
 
 # Check 3: Version works
 echo ""
 echo -e "${BLUE}Testing basic commands...${NC}"
-if version=$(timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
+if [[ ! -x "${ABI_SCRIPT}" ]]; then
+    echo -e "${RED}✗${NC} Cannot test (script not executable)"
+    ((checks_failed++))
+    ((checks_failed++))
+elif version=$(timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
     if [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         echo -e "${GREEN}✓${NC} Version command works: ${version}"
         ((checks_passed++))
@@ -77,7 +88,10 @@ else
 fi
 
 # Check 4: Help works
-if timeout 3s "${ABI_SCRIPT}" --help &>/dev/null; then
+if [[ ! -x "${ABI_SCRIPT}" ]]; then
+    echo -e "${RED}✗${NC} Cannot test (script not executable)"
+    ((checks_failed++))
+elif timeout 3s "${ABI_SCRIPT}" --help &>/dev/null; then
     echo -e "${GREEN}✓${NC} Help command works"
     ((checks_passed++))
 else

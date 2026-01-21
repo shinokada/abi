@@ -75,7 +75,7 @@ git commit -m "Update abi script"
 
 ### What You'll See
 
-```
+```text
 Running pre-commit checks...
 
 [1/2] Checking bash scripts with shellcheck...
@@ -149,7 +149,7 @@ Tests are skipped when:
 ### On Failure
 
 If checks fail:
-```
+```text
 ✗ Commit rejected: shellcheck found issues
 Fix the issues above and try again
 ```

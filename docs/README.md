@@ -220,7 +220,7 @@ This shows:
 
 After installation, see a detailed summary:
 
-```
+```text
 ===== Installation Summary =====
   Total packages: 15
   Successfully installed: 13
@@ -235,7 +235,7 @@ Failed packages:
 
 Before important operations, ABI shows what it will do and asks for confirmation:
 
-```
+```text
 Gist Configuration:
   Description: My brew list
   Filename: my-brew-formula
@@ -262,7 +262,7 @@ Clear error messages help you resolve issues quickly.
 
 ABI automatically handles Homebrew taps. If your Gist contains:
 
-```
+```text
 shinokada/abi/abi
 shinokada/gitstart/gitstart
 jq
@@ -340,8 +340,8 @@ brew install <failed-package>
 ### Running Tests
 
 ```bash
-chmod +x test-abi.sh
-./test-abi.sh
+chmod +x tests/test-abi.sh
+./tests/test-abi.sh
 ```
 
 ### Installing Pre-commit Hook

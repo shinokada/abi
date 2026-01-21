@@ -47,11 +47,11 @@ else
         SHELLCHECK_FAILED=0
         for file in $FILES; do
             if [ -f "$file" ]; then
-                if ! shellcheck -x "$file" 2>&1 | grep -v "^In .* line"; then
+                if shellcheck -x "$file"; then
+                    echo -e "${GREEN}✓${NC} $file passed"
+                else
                     SHELLCHECK_FAILED=1
                     echo -e "${RED}✗${NC} shellcheck failed: $file"
-                else
-                    echo -e "${GREEN}✓${NC} $file passed"
                 fi
             fi
         done

@@ -32,7 +32,7 @@ The hook now:
 ## What It Does Now
 
 ### 1. ShellCheck Validation
-```
+```text
 [1/2] Checking bash scripts with shellcheck...
 Checking files:
   • abi
@@ -42,7 +42,7 @@ Checking files:
 ```
 
 ### 2. Test Suite (Smart)
-```
+```text
 [2/2] Running test suite...
   abi script was modified, running tests...
 

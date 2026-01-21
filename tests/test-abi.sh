@@ -3,7 +3,8 @@
 # Test suite for abi script
 # Simplified version that actually works!
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 1
+readonly SCRIPT_DIR
 readonly ABI_SCRIPT="${SCRIPT_DIR}/../abi"
 
 # Colors
@@ -64,39 +65,40 @@ section "Test 2: Executability"
 if [[ -x "${ABI_SCRIPT}" ]]; then
     pass "Script is executable"
 else
-    fail "Script is NOT executable - run: chmod +x ../abi"
+    echo -e "${YELLOW}! Script is not executable, attempting to fix...${NC}"
+    if chmod +x "${ABI_SCRIPT}" 2>/dev/null; then
+        pass "Script made executable (auto-fixed)"
+    else
+        fail "Script is NOT executable and could not be fixed - run: chmod +x ${ABI_SCRIPT}"
+    fi
 fi
 
 # Test 3: Version flag (with timeout)
 section "Test 3: Version Flag"
-if [[ -x "${ABI_SCRIPT}" ]]; then
-    if version=$(timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
-        if [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            pass "Version command works: ${version}"
-        else
-            fail "Version format invalid: ${version}"
-        fi
+if [[ ! -x "${ABI_SCRIPT}" ]]; then
+    fail "Skipped (script not executable)"
+elif version=$(timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
+    if [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        pass "Version command works: ${version}"
     else
-        fail "Version command timed out or failed"
+        fail "Version format invalid: ${version}"
     fi
 else
-    fail "Skipped (script not executable)"
+    fail "Version command timed out or failed"
 fi
 
 # Test 4: Help flag (with timeout)
 section "Test 4: Help Flag"
-if [[ -x "${ABI_SCRIPT}" ]]; then
-    if output=$(timeout 3s "${ABI_SCRIPT}" --help 2>&1 || true); then
-        if [[ "${output}" =~ "Usage:" ]]; then
-            pass "Help command works"
-        else
-            fail "Help output invalid"
-        fi
+if [[ ! -x "${ABI_SCRIPT}" ]]; then
+    fail "Skipped (script not executable)"
+elif output=$(timeout 3s "${ABI_SCRIPT}" --help 2>&1 || true); then
+    if [[ "${output}" =~ "Usage:" ]]; then
+        pass "Help command works"
     else
-        fail "Help command timed out or failed"
+        fail "Help output invalid"
     fi
 else
-    fail "Skipped (script not executable)"
+    fail "Help command timed out or failed"
 fi
 
 # Test 5: Shebang

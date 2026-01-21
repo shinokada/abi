@@ -4,7 +4,7 @@ Should you add Continuous Integration to this repository? This guide helps you d
 
 ## Quick Decision Tree
 
-```
+```text
 Do you actively develop/maintain abi?
 ├─ YES → Do others contribute?
 │  ├─ YES → ✅ ADD CI (Comprehensive)
@@ -117,7 +117,7 @@ Your project currently has:
 
 **Action:**
 ```bash
-cd /Users/shinichiokada/Bash/abi
+cd /path/to/abi  # Navigate to your local abi repository
 mv .github/workflows/ci-simple.yml.example .github/workflows/ci.yml
 git add .github/workflows/ci.yml
 git commit -m "Add CI workflow"
@@ -319,16 +319,16 @@ git commit -m "Remove CI examples"
 
 ## Summary Table
 
-| Aspect | No CI | Simple CI | Comprehensive CI |
-|--------|-------|-----------|------------------|
-| Setup Time | 0 min | 5 min | 15 min |
-| Monthly Cost | $0 | $0 | $0 |
-| Test Time | 2 sec | 2 min | 4 min |
-| Environments | Local | macOS | macOS + Linux |
-| Visibility | Private | Public | Public |
-| Maintenance | None | Low | Medium |
-| Professional | ✓ | ✓✓ | ✓✓✓ |
-| For Learning | - | ✓✓ | ✓✓✓ |
+| Aspect       | No CI   | Simple CI | Comprehensive CI |
+| ------------ | ------- | --------- | ---------------- |
+| Setup Time   | 0 min   | 5 min     | 15 min           |
+| Monthly Cost | $0      | $0        | $0               |
+| Test Time    | 2 sec   | 2 min     | 4 min            |
+| Environments | Local   | macOS     | macOS + Linux    |
+| Visibility   | Private | Public    | Public           |
+| Maintenance  | None    | Low       | Medium           |
+| Professional | ✓       | ✓✓        | ✓✓✓              |
+| For Learning | -       | ✓✓        | ✓✓✓              |
 
 ## Questions?
 
