@@ -19,6 +19,30 @@ tests_run=0
 tests_passed=0
 tests_failed=0
 
+# Portable timeout runner for macOS and Linux compatibility
+run_with_timeout() {
+    local duration="$1"
+    shift
+    local seconds="${duration%s}" # strip trailing 's' if present
+    if command -v timeout &>/dev/null; then
+        timeout "${duration}" "$@"
+    elif command -v gtimeout &>/dev/null; then
+        gtimeout "${duration}" "$@"
+    else
+        "$@" &
+        local pid=$!
+        (
+            sleep "${seconds}"
+            kill -0 "${pid}" 2>/dev/null && kill "${pid}"
+        ) &
+        local killer=$!
+        wait "${pid}"
+        local status=$?
+        kill "${killer}" 2>/dev/null || true
+        return "${status}"
+    fi
+}
+
 pass() {
     ((tests_passed++))
     ((tests_run++))
@@ -77,7 +101,7 @@ fi
 section "Test 3: Version Flag"
 if [[ ! -x "${ABI_SCRIPT}" ]]; then
     fail "Skipped (script not executable)"
-elif version=$(timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
+elif version=$(run_with_timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
     if [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         pass "Version command works: ${version}"
     else
@@ -91,7 +115,7 @@ fi
 section "Test 4: Help Flag"
 if [[ ! -x "${ABI_SCRIPT}" ]]; then
     fail "Skipped (script not executable)"
-elif output=$(timeout 3s "${ABI_SCRIPT}" --help 2>&1 || true); then
+elif output=$(run_with_timeout 3s "${ABI_SCRIPT}" --help 2>&1 || true); then
     if [[ "${output}" =~ "Usage:" ]]; then
         pass "Help command works"
     else

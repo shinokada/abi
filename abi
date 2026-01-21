@@ -11,7 +11,8 @@ set -euo pipefail
 
 # Script metadata
 readonly VERSION="0.2.0"
-readonly SCRIPT_NAME=$(basename "$0")
+SCRIPT_NAME=$(basename "$0")
+readonly SCRIPT_NAME
 
 # Default values
 type=""
@@ -23,7 +24,6 @@ cask_filename="my-brew-cask-formula"
 visibility="secret"
 url=""
 dry_run=false
-verbose=false
 log_file=""
 
 # Color codes
@@ -168,9 +168,8 @@ while (($# > 0)); do
         shift 2
         ;;
     -V | --verbose)
-        verbose=true
         shift
-        ;;
+        ;; # verbose flag accepted but not used in current version
     leaves)
         type="leaves"
         shift
