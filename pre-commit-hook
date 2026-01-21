@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+
+# Pre-commit hook for abi repository
+# Runs shellcheck and optionally tests before commit
+
+set -e
+
+# Colors
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'
+
+# Configuration
+RUN_TESTS=true  # Set to false to skip tests
+
+echo -e "${BLUE}Running pre-commit checks...${NC}"
+echo ""
+
+# ========================================
+# 1. ShellCheck validation
+# ========================================
+echo -e "${BLUE}[1/2] Checking bash scripts with shellcheck...${NC}"
+
+# Check if shellcheck is installed
+if ! command -v shellcheck &> /dev/null; then
+    echo -e "${YELLOW}⚠ Warning: shellcheck is not installed${NC}"
+    echo "  Install: brew install shellcheck (macOS) or apt-get install shellcheck (Linux)"
+    echo "  Skipping shellcheck validation..."
+    echo ""
+else
+    # Get list of staged bash files
+    FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sh|bash)$|^abi$|^abi-improved$' || true)
+
+    if [ -z "$FILES" ]; then
+        echo -e "${GREEN}✓${NC} No bash files to check"
+        echo ""
+    else
+        echo "Checking files:"
+        echo "$FILES" | while read -r file; do
+            echo "  • $file"
+        done
+        echo ""
+
+        # Run shellcheck on staged files
+        SHELLCHECK_FAILED=0
+        for file in $FILES; do
+            if [ -f "$file" ]; then
+                if ! shellcheck -x "$file" 2>&1 | grep -v "^In .* line"; then
+                    SHELLCHECK_FAILED=1
+                    echo -e "${RED}✗${NC} shellcheck failed: $file"
+                else
+                    echo -e "${GREEN}✓${NC} $file passed"
+                fi
+            fi
+        done
+
+        if [ $SHELLCHECK_FAILED -eq 1 ]; then
+            echo ""
+            echo -e "${RED}✗ Commit rejected: shellcheck found issues${NC}"
+            echo "Fix the issues above and try again"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}✓${NC} All shellcheck validations passed"
+        echo ""
+    fi
+fi
+
+# ========================================
+# 2. Run tests
+# ========================================
+if [ "$RUN_TESTS" = true ]; then
+    echo -e "${BLUE}[2/2] Running test suite...${NC}"
+    
+    # Check if test file exists
+    if [ -f "tests/test-abi.sh" ] && [ -x "tests/test-abi.sh" ]; then
+        # Check if abi script was modified
+        MODIFIED_ABI=$(git diff --cached --name-only | grep -E '^abi$|^abi-improved$' || true)
+        
+        if [ -n "$MODIFIED_ABI" ]; then
+            echo "  abi script was modified, running tests..."
+            echo ""
+            
+            if tests/test-abi.sh; then
+                echo ""
+                echo -e "${GREEN}✓${NC} All tests passed"
+                echo ""
+            else
+                echo ""
+                echo -e "${RED}✗ Commit rejected: tests failed${NC}"
+                echo "Fix the failing tests and try again"
+                echo ""
+                echo "To skip tests, edit .git/hooks/pre-commit and set RUN_TESTS=false"
+                exit 1
+            fi
+        else
+            echo -e "${GREEN}✓${NC} abi script not modified, skipping tests"
+            echo ""
+        fi
+    else
+        echo -e "${YELLOW}⚠${NC} Test suite not found or not executable"
+        echo "  Location: tests/test-abi.sh"
+        echo "  Run: chmod +x tests/test-abi.sh"
+        echo ""
+    fi
+else
+    echo -e "${BLUE}[2/2] Tests skipped (RUN_TESTS=false)${NC}"
+    echo ""
+fi
+
+# ========================================
+# Success!
+# ========================================
+echo -e "${GREEN}╔═══════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║  ✓ All pre-commit checks passed!                 ║${NC}"
+echo -e "${GREEN}╚═══════════════════════════════════════════════════╝${NC}"
+echo ""
+
+exit 0
