@@ -284,7 +284,7 @@ For **abi** specifically:
 
 **Do this:**
 ```bash
-cd /Users/shinichiokada/Bash/abi
+cd /path/to/abi  # Navigate to your local abi repository
 
 # Enable simple CI
 mv .github/workflows/ci-simple.yml.example .github/workflows/ci.yml

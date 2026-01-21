@@ -73,8 +73,8 @@ Clone this repository and create a symlink:
 ```bash
 git clone https://github.com/shinokada/abi.git
 cd abi
-chmod +x abi-improved
-ln -sf "$(pwd)/abi-improved" ~/bin/abi
+chmod +x abi
+ln -sf "$(pwd)/abi" ~/bin/abi
 ```
 
 Make sure `~/bin` is in your `$PATH`.

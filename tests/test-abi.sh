@@ -6,6 +6,37 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 1
 readonly SCRIPT_DIR
 readonly ABI_SCRIPT="${SCRIPT_DIR}/../abi"
+readonly LIB_DIR="${SCRIPT_DIR}/lib"
+
+# Source shared helpers
+if [[ -f "${LIB_DIR}/common.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${LIB_DIR}/common.sh"
+else
+    # Fallback if common.sh doesn't exist
+    run_with_timeout() {
+        local duration="$1"
+        shift
+        local seconds="${duration%s}" # strip trailing 's' if present
+        if command -v timeout &>/dev/null; then
+            timeout "${duration}" "$@"
+        elif command -v gtimeout &>/dev/null; then
+            gtimeout "${duration}" "$@"
+        else
+            "$@" &
+            local pid=$!
+            (
+                sleep "${seconds}"
+                kill -0 "${pid}" 2>/dev/null && kill "${pid}"
+            ) &
+            local killer=$!
+            wait "${pid}"
+            local status=$?
+            kill "${killer}" 2>/dev/null || true
+            return "${status}"
+        fi
+    }
+fi
 
 # Colors
 readonly GREEN='\033[0;32m'
@@ -18,30 +49,6 @@ readonly NC='\033[0m'
 tests_run=0
 tests_passed=0
 tests_failed=0
-
-# Portable timeout runner for macOS and Linux compatibility
-run_with_timeout() {
-    local duration="$1"
-    shift
-    local seconds="${duration%s}" # strip trailing 's' if present
-    if command -v timeout &>/dev/null; then
-        timeout "${duration}" "$@"
-    elif command -v gtimeout &>/dev/null; then
-        gtimeout "${duration}" "$@"
-    else
-        "$@" &
-        local pid=$!
-        (
-            sleep "${seconds}"
-            kill -0 "${pid}" 2>/dev/null && kill "${pid}"
-        ) &
-        local killer=$!
-        wait "${pid}"
-        local status=$?
-        kill "${killer}" 2>/dev/null || true
-        return "${status}"
-    fi
-}
 
 pass() {
     ((tests_passed++))
@@ -66,42 +73,22 @@ echo "╔═══════════════════════�
 echo "║         ABI Script Test Suite                     ║"
 echo "╚═══════════════════════════════════════════════════╝"
 echo ""
-
-# Pre-check
-if [[ ! -f "${ABI_SCRIPT}" ]]; then
-    echo -e "${RED}✗ Error: abi script not found at ${ABI_SCRIPT}${NC}"
-    exit 1
-fi
-
 echo -e "${BLUE}Testing: ${ABI_SCRIPT}${NC}"
 echo ""
 
-# Test 1: File exists
-section "Test 1: File Existence"
-if [[ -f "${ABI_SCRIPT}" ]]; then
-    pass "abi script exists"
-else
-    fail "abi script not found"
-fi
-
-# Test 2: Is executable
-section "Test 2: Executability"
+# Test 1: Is executable
+section "Test 1: Executability"
 if [[ -x "${ABI_SCRIPT}" ]]; then
     pass "Script is executable"
 else
-    echo -e "${YELLOW}! Script is not executable, attempting to fix...${NC}"
-    if chmod +x "${ABI_SCRIPT}" 2>/dev/null; then
-        pass "Script made executable (auto-fixed)"
-    else
-        fail "Script is NOT executable and could not be fixed - run: chmod +x ${ABI_SCRIPT}"
-    fi
+    fail "Script is NOT executable - run: chmod +x ${ABI_SCRIPT}"
 fi
 
-# Test 3: Version flag (with timeout)
-section "Test 3: Version Flag"
+# Test 2: Version flag (with timeout)
+section "Test 2: Version Flag"
 if [[ ! -x "${ABI_SCRIPT}" ]]; then
     fail "Skipped (script not executable)"
-elif version=$(run_with_timeout 3s "${ABI_SCRIPT}" --version 2>&1 || true); then
+elif version=$(run_with_timeout 3s "${ABI_SCRIPT}" --version 2>&1); then
     if [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
         pass "Version command works: ${version}"
     else
@@ -111,11 +98,11 @@ else
     fail "Version command timed out or failed"
 fi
 
-# Test 4: Help flag (with timeout)
-section "Test 4: Help Flag"
+# Test 3: Help flag (with timeout)
+section "Test 3: Help Flag"
 if [[ ! -x "${ABI_SCRIPT}" ]]; then
     fail "Skipped (script not executable)"
-elif output=$(run_with_timeout 3s "${ABI_SCRIPT}" --help 2>&1 || true); then
+elif output=$(run_with_timeout 3s "${ABI_SCRIPT}" --help 2>&1); then
     if [[ "${output}" =~ "Usage:" ]]; then
         pass "Help command works"
     else
@@ -125,8 +112,8 @@ else
     fail "Help command timed out or failed"
 fi
 
-# Test 5: Shebang
-section "Test 5: Shebang Line"
+# Test 4: Shebang
+section "Test 4: Shebang Line"
 if first_line=$(head -n 1 "${ABI_SCRIPT}" 2>/dev/null); then
     # Accept both #!/usr/bin/env bash and #!/bin/bash
     if [[ "${first_line}" =~ ^#!.*/bash$ ]] || [[ "${first_line}" =~ ^#!/usr/bin/env\ bash$ ]]; then

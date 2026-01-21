@@ -206,7 +206,8 @@ while (($# > 0)); do
     *)
         log_error "Unknown option: $1"
         echo ""
-        usage
+        usage >&2
+        exit 1
         ;;
     esac
 done
@@ -271,7 +272,7 @@ fetch_gist_content() {
     local raw_url="${gist_url}/raw"
     log_info "Fetching Gist content from: ${raw_url}"
 
-    if ! curl --silent --head --fail --max-time 10 "${raw_url}" &>/dev/null; then
+    if ! curl -L --silent --head --fail --max-time 10 "${raw_url}" &>/dev/null; then
         abort "Failed to access Gist URL: ${raw_url}"
     fi
 
@@ -431,9 +432,11 @@ fn_install() {
     fi
 
     # Process each package
+    declare -i processed_packages=0
     for element in "${packages[@]}"; do
         # Skip empty lines and comments
         [[ -z "${element}" ]] || [[ "${element}" =~ ^# ]] && continue
+        ((processed_packages++))
 
         if [[ "${element}" == *"/"* ]]; then
             # Handle tap formulas (e.g., shinokada/abi/abi)
@@ -465,7 +468,8 @@ fn_install() {
     # Print summary
     echo ""
     log_info "===== Installation Summary ====="
-    echo "  Total packages: ${total_packages}"
+    echo "  Total packages in list: ${total_packages}"
+    echo "  Packages processed: ${processed_packages}"
     echo "  Successfully installed: ${installed_packages}"
     echo "  Failed: ${failed_packages}"
 

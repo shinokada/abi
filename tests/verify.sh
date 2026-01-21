@@ -7,6 +7,37 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" || exit 1
 readonly SCRIPT_DIR
 readonly PROJECT_ROOT="${SCRIPT_DIR}/.."
 readonly ABI_SCRIPT="${PROJECT_ROOT}/abi"
+readonly LIB_DIR="${SCRIPT_DIR}/lib"
+
+# Source shared helpers
+if [[ -f "${LIB_DIR}/common.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${LIB_DIR}/common.sh"
+else
+    # Fallback if common.sh doesn't exist
+    run_with_timeout() {
+        local duration="$1"
+        shift
+        local seconds="${duration%s}" # strip trailing 's' if present
+        if command -v timeout &>/dev/null; then
+            timeout "${duration}" "$@"
+        elif command -v gtimeout &>/dev/null; then
+            gtimeout "${duration}" "$@"
+        else
+            "$@" &
+            local pid=$!
+            (
+                sleep "${seconds}"
+                kill -0 "${pid}" 2>/dev/null && kill "${pid}"
+            ) &
+            local killer=$!
+            wait "${pid}"
+            local status=$?
+            kill "${killer}" 2>/dev/null || true
+            return "${status}"
+        fi
+    }
+fi
 
 # Colors
 readonly GREEN='\033[0;32m'
@@ -17,30 +48,6 @@ readonly NC='\033[0m'
 
 checks_passed=0
 checks_failed=0
-
-# Portable timeout runner for macOS and Linux compatibility
-run_with_timeout() {
-    local duration="$1"
-    shift
-    local seconds="${duration%s}" # strip trailing 's' if present
-    if command -v timeout &>/dev/null; then
-        timeout "${duration}" "$@"
-    elif command -v gtimeout &>/dev/null; then
-        gtimeout "${duration}" "$@"
-    else
-        "$@" &
-        local pid=$!
-        (
-            sleep "${seconds}"
-            kill -0 "${pid}" 2>/dev/null && kill "${pid}"
-        ) &
-        local killer=$!
-        wait "${pid}"
-        local status=$?
-        kill "${killer}" 2>/dev/null || true
-        return "${status}"
-    fi
-}
 
 echo "╔═══════════════════════════════════════════════════╗"
 echo "║     ABI Installation Verification                 ║"
